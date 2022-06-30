@@ -12,44 +12,13 @@
     <script src="https://cdn.jsdelivr.net/gh/ethereumjs/browser-builds/dist/ethereumjs-tx/ethereumjs-tx-1.3.3.min.js"></script>
     <title>Document</title>
   </head>
-  <body class="w-4/5 mx-auto">
+  <body>
     <nav
       class="flex items-center justify-between flex-wrap bg-indigo-500 p-6 opacity-75"
     >
       <h1 class="text-2xl font-semibold px-6 ml-10 text-white">Web3 실습</h1>
     </nav>
-    <!-- <div class="w-72 h-full shadow-md bg-white px-1 absolute">
-      <ul class="relative">
-        <li class="relative">
-          <a
-            class="flex items-center text-sm py-4 px-12 h-12 overflow-hidden text-gray-700 text-ellipsis whitespace-nowrap rounded hover:text-gray-900 hover:bg-gray-100 transition duration-300 ease-in-out"
-            href="#!"
-            data-mdb-ripple="true"
-            data-mdb-ripple-color="dark"
-            >Sidenav link 1</a
-          >
-        </li>
-        <li class="relative">
-          <a
-            class="flex items-center text-sm py-4 px-12 h-12 overflow-hidden text-gray-700 text-ellipsis whitespace-nowrap rounded hover:text-gray-900 hover:bg-gray-100 transition duration-300 ease-in-out"
-            href="#!"
-            data-mdb-ripple="true"
-            data-mdb-ripple-color="dark"
-            >Sidenav link 2</a
-          >
-        </li>
-        <li class="relative">
-          <a
-            class="flex items-center text-sm py-4 px-12 h-12 overflow-hidden text-gray-700 text-ellipsis whitespace-nowrap rounded hover:text-gray-900 hover:bg-gray-100 transition duration-300 ease-in-out"
-            href="#!"
-            data-mdb-ripple="true"
-            data-mdb-ripple-color="dark"
-            >Sidenav link 2</a
-          >
-        </li>
-      </ul>
-    </div> -->
-    <div class="w-full mx-auto h-full py-4">
+    <div class="w-4/5 mx-auto h-full py-4">
       <div class="py-4">
         <button
           type="button"
@@ -59,8 +28,7 @@
           계정 생성
         </button>
       </div>
-      <div id="address"></div>
-      <div id="privateKey"></div>
+      <div id="accountInfo"></div>
       <div>
         <label for="exampleFormControlInput1" class="form-label text-xl inline-block mb-2 text-gray-700 my-3">잔액 조회</label>
         <div class="flex flex-row">
@@ -80,6 +48,7 @@
         </div>
         <div id="balance" class="my-2"></div>
         <div id="balanceErr" class="my-2 text-red-700"></div>
+        <!-- 코인전송 -->
         <div>
           <label for="exampleFormControlInput1" class="form-label text-xl inline-block mb-2 text-gray-700 my-3">코인 전송</label>
         <div class="flex flex-row">
@@ -116,6 +85,7 @@
           </button>
         </div>
         <div id="transferMsg" class="my-2"></div>
+        <div id="transferErr" class="my-2 text-red-700"></div>
       </div>
       <div>
         <label for="exampleFormControlInput1" class="form-label text-xl inline-block mb-2 text-gray-700 my-3">트랜잭션 조회</label>
@@ -162,17 +132,15 @@
 <script>
   const web3 = new Web3(
     "https://ropsten.infura.io/v3/b4f1527fb11543da9a28471341c745ee"
+    // "https://mainnet.infura.io/v3/b4f1527fb11543da9a28471341c745ee"
   );
   const Buffer = ethereumjs.Buffer.Buffer
   // 계정 생성
   const createAccount = async () => {
     const newAccount = await web3.eth.accounts.create();
-    const addr = document.getElementById("address");
-    const privatekey = document.getElementById("privateKey");
+    const accountInfo = document.getElementById("accountInfo");
     const { address, privateKey } = newAccount;
-    console.log("address :" + address);
-    console.log("privateKey :" + privateKey);
-    privatekey.innerHTML = `
+    accountInfo.innerHTML = `
     <div class="p-6 shadow-lg rounded-lg bg-gray-100 text-gray-700">
       <h2 class="font-semibold text-3xl mb-5">계정이 생성되었습니다!</h2>
       <p>
@@ -210,55 +178,62 @@
       document.getElementById('balance').style.display = 'none'
       document.getElementById('balanceErr').innerHTML = err;
     }
-   
   };
 
   // 코인 전송
   const transfer = async () => {
-    const from = document.getElementById('from').value;
-    const to = document.getElementById('to').value;
-    const eth = document.getElementById('eth').value
-    const transferMsg = document.getElementById('transferMsg')
-    const private = Buffer.from(document.getElementById('private').value, 'hex');
-    web3.eth.getTransactionCount(from, async (err, txCount) => {
-      //트랜잭션 생성
-      const txObject = {
-      nonce: web3.utils.toHex(txCount),
-      to: to,
-      value: web3.utils.toHex(web3.utils.toWei(eth, "ether")),
-      gasLimit: web3.utils.toHex(21000),
-      gasPrice: web3.utils.toHex(web3.utils.toWei("10", "gwei")),
-      };
-      //트랜잭션 서명
-      const tx = new ethereumjs.Tx(txObject, { chain: "ropsten" });
-      tx.sign(private);
-      console.log(tx)
+    try{
+      const from = document.getElementById('from').value;
+      const to = document.getElementById('to').value;
+      const eth = document.getElementById('eth').value
+      const transferMsg = document.getElementById('transferMsg')
+      const private = Buffer.from(document.getElementById('private').value, 'hex');
+      web3.eth.getTransactionCount(from, async (err, txCount) => {
+        //트랜잭션 생성
+        const txObject = {
+        nonce: web3.utils.toHex(txCount),
+        to: to,
+        value: web3.utils.toHex(web3.utils.toWei(eth, "ether")),
+        gasLimit: web3.utils.toHex(21000),
+        gasPrice: web3.utils.toHex(web3.utils.toWei("10", "gwei")),
+        };
+        //트랜잭션 서명
+        const tx = new ethereumjs.Tx(txObject, { chain: "ropsten" });
+        tx.sign(private);
+        console.log(tx)
 
-      const serializedTransaction = tx.serialize();
-      const raw = "0x" + serializedTransaction.toString("hex");
-      //트랜잭션 브로드캐스트
-      web3.eth.sendSignedTransaction(raw, async (err, txHash) => {
-      console.log("txHash:", txHash);
-      transferMsg.innerHTML = await `
-      <div class="p-6 shadow-lg rounded-lg bg-gray-100 text-gray-700">
-        <h2 class="font-semibold text-3xl mb-5">전송 완료</h2>
-        <p>
-          txHash : ${txHash}
-        </p>
-        <hr class="my-3 border-gray-300" />
-        <p>
-          from : ${from}
-        </p>
-        <p>
-          to : ${to}
-        </p>
-        <hr class="my-3 border-gray-300" />
-        <p>
-          value : ${eth} ether
-        </p>
-      </div>`;
+        const serializedTransaction = tx.serialize();
+        const raw = "0x" + serializedTransaction.toString("hex");
+        //트랜잭션 브로드캐스트
+        web3.eth.sendSignedTransaction(raw, async (err, txHash) => {
+        console.log("txHash:", txHash);
+        document.getElementById('transferErr').style.display ='none'
+        transferMsg.style.display = 'block'
+        transferMsg.innerHTML = await `
+        <div class="p-6 shadow-lg rounded-lg bg-gray-100 text-gray-700">
+          <h2 class="font-semibold text-3xl mb-5">전송 완료</h2>
+          <p>
+            txHash : ${txHash}
+          </p>
+          <hr class="my-3 border-gray-300" />
+          <p>
+            from : ${from}
+          </p>
+          <p>
+            to : ${to}
+          </p>
+          <hr class="my-3 border-gray-300" />
+          <p>
+            value : ${eth} ether
+          </p>
+        </div>`;
+        });
       });
-    });
+    } catch(err) {
+      document.getElementById('transferMsg').style.display = 'none'
+      document.getElementById('transferErr').innerHTML =err;
+    }
+    
   };
 
   //트랜잭션 조회
@@ -271,7 +246,7 @@
     const {blockHash, blockNumber, from, to, gas, gasPrice, nonce, value} = txInfo
     txInfoMsg.innerHTML = `
       <div class="p-6 shadow-lg rounded-lg bg-gray-100 text-gray-700">
-        <h2 class="font-semibold text-3xl mb-5">전송 완료</h2>
+        <h2 class="font-semibold text-3xl mb-5">트랜잭션 정보</h2>
         <p>
           blockHash : ${blockHash}
         </p>
@@ -315,6 +290,10 @@
         <h2 class="font-semibold text-3xl mb-5">블록 상세정보</h2>
         <p>
           block Height : ${number}
+        </p>
+        <hr class="my-2 border-gray-300" />
+        <p>
+          nonce : ${nonce}
         </p>
         <hr class="my-2 border-gray-300" />
         <p>
