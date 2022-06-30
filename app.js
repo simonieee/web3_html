@@ -12,3 +12,5 @@ const privateKey2 = process.env.PRIVATE_KEY_2;
 web3.eth.getBalance(account1, async (err, bal) => {
   console.log(web3.utils.fromWei(bal, "ether"));
 });
+
+web3.eth.sendTransaction;
